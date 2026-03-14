@@ -54,12 +54,8 @@ async def async_setup_entry(
     scan_interval = config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     detection_object = config_entry.data.get(CONF_DETECTION_OBJECT, DEFAULT_DETECTION_OBJECT)
 
-    # Create AI client
-    try:
-        ai_client = get_ai_client(ai_service, api_key)
-    except ValueError as err:
-        _LOGGER.error("Failed to create AI client: %s", err)
-        return
+    # Create AI client (already validated in __init__.py)
+    ai_client = get_ai_client(ai_service, api_key)
 
     # Create coordinator
     coordinator = CameraObjectDetectorCoordinator(

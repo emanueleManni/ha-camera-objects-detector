@@ -102,11 +102,15 @@ class CameraObjectDetectorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> "CameraObjectDetectorOptionsFlow":
         """Get the options flow for this handler."""
-        return CameraObjectDetectorOptionsFlow()
+        return CameraObjectDetectorOptionsFlow(config_entry)
 
 
 class CameraObjectDetectorOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for Camera Object Detector."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

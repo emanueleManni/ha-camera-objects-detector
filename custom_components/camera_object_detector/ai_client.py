@@ -65,7 +65,7 @@ class MoondreamAIClient(AIServiceClient):
             }
             
             payload = {
-                "image": image_b64,
+                "image_url": f"data:image/jpeg;base64,{image_b64}",
                 "object": detection_object,
             }
             
