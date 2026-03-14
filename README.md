@@ -1,22 +1,20 @@
-# Camera Object Detector - Integrazione Custom per Home Assistant
+# Camera Object Detector (HA custom integration)
 
-🇮🇹 **Rilevamento automatico di oggetti usando AI**
+Integrazione custom per Home Assistant per rilevare automaticamente oggetti (stendino, persone, automobili, biciclette, animali, ecc.) analizzando le immagini delle telecamere di videosorveglianza analizzandone l'immagine con il modello `moondream.ai`.
 
-Questa integrazione custom per Home Assistant ti permette di rilevare automaticamente oggetti (stendino, persone, automobili, biciclette, animali, ecc.) analizzando le immagini delle telecamere di videosorveglianza analizzandone l'immagine con il modello `moondream.ai`.
+## Caratteristiche
 
-## 🌟 Caratteristiche
+- **Rilevamento configurabile** di qualsiasi oggetto tramite AI
+- **Object detection** con bounding box e confidenza
+- **Supporto per telecamere Home Assistant** (1920x1080 e altre risoluzioni)
+- **Integrazione con Moondream AI SDK** per analisi cloud delle immagini
+- **Aggiornamento periodico** configurabile (da 30 secondi a 1 ora)
+- **Attributi dettagliati**: conteggio oggetti, coordinate bounding box, confidenza, timestamp
+- **Icone personalizzate**: gruccia quando presente, gruccia barrata quando assente
+- **Multilingua**: italiano e inglese
+- **Configurazione tramite UI** (niente YAML!)
 
-- ✅ **Rilevamento configurabile** di qualsiasi oggetto tramite AI
-- 🎯 **Object detection** con bounding box e confidenza
-- 📷 **Supporto per telecamere Home Assistant** (1920x1080 e altre risoluzioni)
-- 🤖 **Integrazione con Moondream AI SDK** per analisi cloud delle immagini
-- 🔄 **Aggiornamento periodico** configurabile (da 30 secondi a 1 ora)
-- 📊 **Attributi dettagliati**: conteggio oggetti, coordinate bounding box, confidenza, timestamp
-- 🎨 **Icone personalizzate**: gruccia quando presente, gruccia barrata quando assente
-- 🌐 **Multilingua**: italiano e inglese
-- ⚙️ **Configurazione tramite UI** (niente YAML!)
-
-## 📦 Installazione
+## Installazione
 
 ### Metodo 1: Manuale
 
@@ -35,7 +33,7 @@ Questa integrazione custom per Home Assistant ti permette di rilevare automatica
 6. Installa "Camera Object Detector"
 7. Riavvia Home Assistant
 
-## ⚙️ Configurazione
+## Configurazione
 
 ### 1. Ottieni una API Key di Moondream AI
 
@@ -80,7 +78,7 @@ binary_sensor.stendino_presente
 - `ai_service`: servizio AI utilizzato
 - `camera_entity`: telecamera utilizzata
 
-## 🎯 Esempi di utilizzo
+## Esempi di utilizzo
 
 ### Notifica se lo stendino è fuori e sta per piovere
 
@@ -147,7 +145,7 @@ card:
   show_state: true
 ```
 
-## 🔧 Configurazione avanzata
+## Configurazione avanzata
 
 ### Modifica delle impostazioni
 
@@ -176,7 +174,7 @@ Puoi specificare qualsiasi nome di oggetto in inglese durante la configurazione.
 
 Il codice è strutturato per supportare facilmente altri servizi AI. Crea una nuova classe che eredita da `AIServiceClient` in `ai_client.py`.
 
-## 🐛 Risoluzione problemi
+## Risoluzione problemi
 
 ### Il sensore non si aggiorna
 
@@ -201,7 +199,7 @@ Se ricevi errori dall'API Moondream:
 - Controlla che la connessione Internet funzioni
 - Verifica i log per il messaggio di errore specifico
 
-## 📊 Costi
+## Costi
 
 **Moondream AI:**
 
@@ -209,11 +207,11 @@ Se ricevi errori dall'API Moondream:
 - Piano a pagamento: verifica su [moondream.ai](https://moondream.ai/pricing)
 - Stima: con scansione ogni 5 minuti = ~8.640 richieste/mese
 
-## 🛠️ Sviluppo
+## Sviluppo
 
 ### Struttura del progetto
 
-```
+```text
 custom_components/camera_object_detector/
 ├── __init__.py              # Inizializzazione integrazione
 ├── binary_sensor.py         # Sensore binario
@@ -236,20 +234,16 @@ Contributi sono benvenuti! Per favore:
 3. Committa le modifiche
 4. Apri una Pull Request
 
-## 📝 License
+## License
 
 MIT License - vedi LICENSE file per dettagli
 
-## 🙏 Credits
+## Credits
 
 - Sviluppato per Home Assistant
 - Utilizza [Moondream AI](https://moondream.ai/) per l'analisi delle immagini
 - Icone da Material Design Icons
 
-## 📮 Supporto
+## Supporto
 
 Per bug, feature request o domande, apri una issue su GitHub.
-
----
-
-**Nota:** Questa è una integrazione di terze parti e non è affiliata con Home Assistant o Moondream AI.
