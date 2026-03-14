@@ -1,5 +1,8 @@
-# Minimal requirements for standalone testing
-# Use this if you just want to test the Moondream API
+# Requirements for standalone testing
+# Note: The Home Assistant integration uses HTTP API and doesn't need these
 
-moondream>=0.1.0
-pillow>=10.0.0
+# Optional: Only needed for local testing outside Home Assistant
+# moondream>=0.1.0  # Has dependency conflicts with HA, not recommended
+# pillow>=10.0.0
+
+# No dependencies required - integration uses aiohttp (built-in to Home Assistant)

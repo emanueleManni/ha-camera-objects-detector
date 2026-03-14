@@ -1,8 +1,11 @@
 # Development Requirements
 
-# Core dependencies (also in manifest.json)
-moondream>=0.1.0
-pillow>=10.0.0  # For test scripts
+# Note: moondream removed due to dependency conflicts with Home Assistant
+# The integration now uses HTTP API instead of Python library
+
+# Optional testing dependencies (not required for HA integration)
+# moondream>=0.1.0  # Has pillow version conflicts
+# pillow>=10.0.0
 
 # Development and testing (essential)
 pytest>=7.4.0

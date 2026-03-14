@@ -2,17 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import io
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-try:
-    import moondream as md
-    from PIL import Image
-except ImportError:
-    md = None
-    Image = None
+import aiohttp
 
 from .const import (
     AI_SERVICE_LOCAL,
@@ -31,29 +27,18 @@ class AIServiceClient(ABC):
 
 
 class MoondreamAIClient(AIServiceClient):
-    """Client for Moondream AI service using object detection."""
+    """Client for Moondream AI service using HTTP API."""
+
+    API_URL = "https://api.moondream.ai/v1/detect"
 
     def __init__(self, api_key: str, timeout: int = 30) -> None:
         """Initialize the Moondream AI client."""
-        if md is None:
-            raise ImportError(
-                "moondream package not installed. "
-                "Install it with: pip install moondream"
-            )
-        
         self.api_key = api_key
         self.timeout = timeout
-        self._model = None
-
-    def _get_model(self):
-        """Get or create moondream model instance."""
-        if self._model is None:
-            self._model = md.vl(api_key=self.api_key)
-        return self._model
 
     async def analyze_image(self, image_data: bytes, detection_object: str) -> dict[str, Any]:
         """
-        Analyze image using Moondream AI object detection.
+        Analyze image using Moondream AI object detection via HTTP API.
         
         Args:
             image_data: Raw image bytes
@@ -68,23 +53,40 @@ class MoondreamAIClient(AIServiceClient):
                 - confidence: float (max confidence if objects found, else 0)
         """
         try:
-            # Convert bytes to PIL Image
-            image = Image.open(io.BytesIO(image_data))
-            
-            # Get model
-            model = self._get_model()
+            # Encode image to base64
+            image_b64 = base64.b64encode(image_data).decode('utf-8')
             
             _LOGGER.debug("Detecting '%s' with Moondream AI", detection_object)
             
-            # Run detection in executor to avoid blocking
-            loop = asyncio.get_event_loop()
-            result = await asyncio.wait_for(
-                loop.run_in_executor(
-                    None,
-                    lambda: model.detect(image, detection_object)
-                ),
-                timeout=self.timeout
-            )
+            # Prepare request
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+            
+            payload = {
+                "image": image_b64,
+                "object": detection_object,
+            }
+            
+            # Make API request
+            timeout = aiohttp.ClientTimeout(total=self.timeout)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(
+                    self.API_URL,
+                    json=payload,
+                    headers=headers,
+                ) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        _LOGGER.error(
+                            "Moondream API error (status %s): %s",
+                            response.status,
+                            error_text
+                        )
+                        raise Exception(f"API error: {response.status}")
+                    
+                    result = await response.json()
             
             _LOGGER.debug("Received response from Moondream AI: %s", result)
             
