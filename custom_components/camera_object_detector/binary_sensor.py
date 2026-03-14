@@ -62,7 +62,7 @@ async def async_setup_entry(
         return
 
     # Create coordinator
-    coordinator = StendinoDetectorCoordinator(
+    coordinator = CameraObjectDetectorCoordinator(
         hass,
         camera_entity,
         ai_client,
@@ -75,16 +75,18 @@ async def async_setup_entry(
     await coordinator.async_config_entry_first_refresh()
 
     # Add entity
-    async_add_entities([StendinoDetectorBinarySensor(coordinator, config_entry)])
+    async_add_entities([CameraObjectDetectorBinarySensor(coordinator, config_entry)])
 
 
-class StendinoDetectorCoordinator(DataUpdateCoordinator):
+class CameraObjectDetectorCoordinator(DataUpdateCoordinator):
     """Coordinator to manage data updates."""
 
     def __init__(
         self,
         hass: HomeAssistant,
         camera_entity: str,
+        ai_client: AIServiceClient,
+        ai_service: str,
         detection_object: str,
         scan_interval: int,
     ) -> None:
@@ -92,9 +94,7 @@ class StendinoDetectorCoordinator(DataUpdateCoordinator):
         self.camera_entity = camera_entity
         self.ai_client = ai_client
         self.ai_service = ai_service
-        self.detection_object = detection_objectentity
-        self.ai_client = ai_client
-        self.ai_service = ai_service
+        self.detection_object = detection_object
 
         super().__init__(
             hass,
@@ -114,6 +114,7 @@ class StendinoDetectorCoordinator(DataUpdateCoordinator):
             if image is None:
                 raise UpdateFailed(f"Failed to get image from camera {self.camera_entity}")
             
+            _LOGGER.debug(
                 "Analyzing image with %s for object: %s",
                 self.ai_service,
                 self.detection_object,
@@ -125,36 +126,41 @@ class StendinoDetectorCoordinator(DataUpdateCoordinator):
             result[ATTR_LAST_IMAGE_TIME] = dt_util.utcnow().isoformat()
             result[ATTR_AI_SERVICE] = self.ai_service
             result[ATTR_DETECTION_OBJECT] = self.detection_object
-            result[ATTR_LAST_IMAGE_TIME] = dt_util.utcnow().isoformat()
-            result[ATTR_AI_SERVICE] = self.ai_service
             
             _LOGGER.debug("Analysis result: %s", result)
             
             return result
 
         except Exception as err:
-            _LOGGER.error("Error updating stendino detector: %s", err)
-            raise UpdateFailed(f"Error updating stendino detector: {err}") from err
+            _LOGGER.error("Error updating camera object detector: %s", err)
+            raise UpdateFailed(f"Error updating camera object detector: {err}") from err
 
 
-class StendinoDetectorBinarySensor(
-    CoordinatorEntity[StendinoDetectorCoordinator], BinarySensorEntity
+class CameraObjectDetectorBinarySensor(
+    CoordinatorEntity[CameraObjectDetectorCoordinator], BinarySensorEntity
 ):
-    """Binary sensor for stendino (clothes drying rack) detection."""
+    """Binary sensor for object detection."""
 
     _attr_has_entity_name = True
     _attr_device_class = BinarySensorDeviceClass.OCCUPANCY
 
     def __init__(
         self,
-        coordinator: StendinoDetectorCoordinator,
+        coordinator: CameraObjectDetectorCoordinator,
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         
-        self._attr_unique_id = f"{config_entry.entry_id}_stendino"
-        self._attr_name = "Steobject is detected."""
+        self._camera_entity = config_entry.data[CONF_CAMERA_ENTITY]
+        detection_object = config_entry.data.get(CONF_DETECTION_OBJECT, DEFAULT_DETECTION_OBJECT)
+        
+        self._attr_unique_id = f"{config_entry.entry_id}_{detection_object}"
+        self._attr_name = f"{detection_object.replace('_', ' ').title()} Detection"
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if object is detected."""
         if self.coordinator.data is None:
             return None
         return self.coordinator.data.get("object_present", False)
@@ -210,12 +216,7 @@ class StendinoDetectorBinarySensor(
 
         # Add detection object
         if ATTR_DETECTION_OBJECT in self.coordinator.data:
-            attributes[ATTR_DETECTION_OBJECT] = self.coordinator.data[ATTR_DETECTION_OBJECT
-            attributes[ATTR_LAST_IMAGE_TIME] = self.coordinator.data[ATTR_LAST_IMAGE_TIME]
-
-        # Add AI service
-        if ATTR_AI_SERVICE in self.coordinator.data:
-            attributes[ATTR_AI_SERVICE] = self.coordinator.data[ATTR_AI_SERVICE]
+            attributes[ATTR_DETECTION_OBJECT] = self.coordinator.data[ATTR_DETECTION_OBJECT]
 
         return attributes
 
@@ -228,5 +229,5 @@ class StendinoDetectorBinarySensor(
     def icon(self) -> str:
         """Return the icon to use in the frontend."""
         if self.is_on:
-            return "mdi:hanger"
-        return "mdi:hanger-off"
+            return "mdi:eye-check"
+        return "mdi:eye-off"

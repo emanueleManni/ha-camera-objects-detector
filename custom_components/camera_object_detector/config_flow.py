@@ -100,13 +100,13 @@ class CameraObjectDetectorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
-    ) -> StendinoDetectorOptionsFlow:
+    ) -> "CameraObjectDetectorOptionsFlow":
         """Get the options flow for this handler."""
-        return StendinoDetectorOptionsFlow(config_entry)
+        return CameraObjectDetectorOptionsFlow(config_entry)
 
 
-class StendinoDetectorOptionsFlow(config_entries.OptionsFlow):
-    """Handle options flow for Stendino Detector."""
+class CameraObjectDetectorOptionsFlow(config_entries.OptionsFlow):
+    """Handle options flow for Camera Object Detector."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
