@@ -102,7 +102,7 @@ class CameraObjectDetectorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> "CameraObjectDetectorOptionsFlow":
         """Get the options flow for this handler."""
-        return CameraObjectDetectorOptionsFlow(config_entry)
+        return CameraObjectDetectorOptionsFlow()
 
 
 class CameraObjectDetectorOptionsFlow(config_entries.OptionsFlow):
