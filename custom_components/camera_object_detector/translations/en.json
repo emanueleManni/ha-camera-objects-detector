@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Camera Object Detector",
+        "description": "Configure object detection from a camera",
+        "data": {
+          "camera_entity": "Camera",
+          "ai_service": "AI Service",
+          "api_key": "API Key (for Moondream AI)",
+          "detection_object": "Object to Detect",
+          "scan_interval": "Scan Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "camera_not_found": "Camera not found",
+      "api_key_required": "API Key required for Moondream AI",
+      "cannot_connect": "Cannot connect to AI service",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This camera is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Camera Object Detector Options",
+        "description": "Modify detector settings",
+        "data": {
+          "ai_service": "AI Service",
+          "api_key": "API Key (for Moondream AI)",
+          "detection_object": "Object to Detect",
+          "scan_interval": "Scan Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "api_key_required": "API Key required for Moondream AI"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+# Minimal requirements for standalone testing
+# Use this if you just want to test the Moondream API
+
+moondream>=0.1.0
+pillow>=10.0.0

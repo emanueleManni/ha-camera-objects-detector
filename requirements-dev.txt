@@ -1,0 +1,24 @@
+# Development Requirements
+
+# Core dependencies (also in manifest.json)
+moondream>=0.1.0
+pillow>=10.0.0  # For test scripts
+
+# Development and testing (essential)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Code quality
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional: Home Assistant testing framework (requires Python 3.13+)
+# Uncomment only if you have Python 3.13+ and want full HA integration testing:
+# pytest-homeassistant-custom-component>=0.13.0
+# homeassistant>=2024.1.0
+
+# Optional: Additional linting
+# pylint>=2.17.0

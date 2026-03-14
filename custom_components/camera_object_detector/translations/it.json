@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configura Camera Object Detector",
+        "description": "Configura il rilevamento di oggetti da una telecamera",
+        "data": {
+          "camera_entity": "Telecamera",
+          "ai_service": "Servizio AI",
+          "api_key": "API Key (per Moondream AI)",
+          "detection_object": "Oggetto da Rilevare",
+          "scan_interval": "Intervallo di scansione (secondi)"
+        }
+      }
+    },
+    "error": {
+      "camera_not_found": "Telecamera non trovata",
+      "api_key_required": "API Key richiesta per Moondream AI",
+      "cannot_connect": "Impossibile connettersi al servizio AI",
+      "unknown": "Errore inaspettato"
+    },
+    "abort": {
+      "already_configured": "Questa telecamera è già configurata"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni Camera Object Detector",
+        "description": "Modifica le impostazioni del rilevatore",
+        "data": {
+          "ai_service": "Servizio AI",
+          "api_key": "API Key (per Moondream AI)",
+          "detection_object": "Oggetto da Rilevare",
+          "scan_interval": "Intervallo di scansione (secondi)"
+        }
+      }
+    },
+    "error": {
+      "api_key_required": "API Key richiesta per Moondream AI"
+    }
+  }
+}

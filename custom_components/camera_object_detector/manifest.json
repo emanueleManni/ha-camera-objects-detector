@@ -1,0 +1,12 @@
+{
+  "domain": "camera_object_detector",
+  "name": "Camera Object Detector",
+  "codeowners": ["@radamanto"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/yourusername/camera-object-detector",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/yourusername/camera-object-detector/issues",
+  "requirements": ["moondream>=0.1.0"],
+  "version": "1.0.0"
+}
