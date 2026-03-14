@@ -110,7 +110,11 @@ class CameraObjectDetectorOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        try:
+            super().__init__(config_entry)
+        except TypeError:
+            # Compatibility fallback for HA versions where OptionsFlow.__init__ has no args.
+            self._config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
