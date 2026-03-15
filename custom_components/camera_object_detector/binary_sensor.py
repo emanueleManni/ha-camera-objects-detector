@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
-from .ai_client import get_ai_client, AIServiceClient
+from .ai_client import AIServiceClient, get_ai_client
 from .const import (
     ATTR_AI_SERVICE,
     ATTR_CONFIDENCE,
@@ -104,27 +104,27 @@ class CameraObjectDetectorCoordinator(DataUpdateCoordinator):
         try:
             # Get image from camera
             _LOGGER.debug("Fetching image from camera: %s", self.camera_entity)
-            
+
             image = await async_get_image(self.hass, self.camera_entity)
-            
+
             if image is None:
                 raise UpdateFailed(f"Failed to get image from camera {self.camera_entity}")
-            
+
             _LOGGER.debug(
                 "Analyzing image with %s for object: %s",
                 self.ai_service,
                 self.detection_object,
             )
-            
+
             result = await self.ai_client.analyze_image(image.content, self.detection_object)
-            
+
             # Add timestamp and metadata
             result[ATTR_LAST_IMAGE_TIME] = dt_util.utcnow().isoformat()
             result[ATTR_AI_SERVICE] = self.ai_service
             result[ATTR_DETECTION_OBJECT] = self.detection_object
-            
+
             _LOGGER.debug("Analysis result: %s", result)
-            
+
             return result
 
         except Exception as err:
@@ -147,10 +147,10 @@ class CameraObjectDetectorBinarySensor(
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
-        
+
         self._camera_entity = config_entry.data[CONF_CAMERA_ENTITY]
         detection_object = config_entry.data.get(CONF_DETECTION_OBJECT, DEFAULT_DETECTION_OBJECT)
-        
+
         self._attr_unique_id = f"{config_entry.entry_id}_{detection_object}"
         self._attr_name = f"{detection_object.replace('_', ' ').title()} Detection"
 

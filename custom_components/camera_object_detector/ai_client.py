@@ -1,19 +1,16 @@
 """AI Service clients for image analysis."""
+
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 import asyncio
 import base64
-import io
 import logging
-from abc import ABC, abstractmethod
 from typing import Any
 
 import aiohttp
 
-from .const import (
-    AI_SERVICE_LOCAL,
-    AI_SERVICE_MOONDREAM,
-)
+from .const import AI_SERVICE_LOCAL, AI_SERVICE_MOONDREAM
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +19,9 @@ class AIServiceClient(ABC):
     """Abstract base class for AI service clients."""
 
     @abstractmethod
-    async def analyze_image(self, image_data: bytes, detection_object: str) -> dict[str, Any]:
+    async def analyze_image(
+        self, image_data: bytes, detection_object: str
+    ) -> dict[str, Any]:
         """Analyze image and return detection results."""
 
 
@@ -36,14 +35,15 @@ class MoondreamAIClient(AIServiceClient):
         self.api_key = api_key
         self.timeout = timeout
 
-    async def analyze_image(self, image_data: bytes, detection_object: str) -> dict[str, Any]:
-        """
-        Analyze image using Moondream AI object detection via HTTP API.
-        
+    async def analyze_image(
+        self, image_data: bytes, detection_object: str
+    ) -> dict[str, Any]:
+        """Analyze image using Moondream AI object detection via HTTP API.
+
         Args:
             image_data: Raw image bytes
             detection_object: Object to detect (e.g., "drying_rack", "person", etc.)
-        
+
         Returns:
             dict with keys:
                 - object_present: bool (True if at least one object detected)
@@ -54,21 +54,21 @@ class MoondreamAIClient(AIServiceClient):
         """
         try:
             # Encode image to base64
-            image_b64 = base64.b64encode(image_data).decode('utf-8')
-            
+            image_b64 = base64.b64encode(image_data).decode("utf-8")
+
             _LOGGER.debug("Detecting '%s' with Moondream AI", detection_object)
-            
+
             # Prepare request
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
             }
-            
+
             payload = {
                 "image_url": f"data:image/jpeg;base64,{image_b64}",
                 "object": detection_object,
             }
-            
+
             # Make API request
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -82,28 +82,28 @@ class MoondreamAIClient(AIServiceClient):
                         _LOGGER.error(
                             "Moondream API error (status %s): %s",
                             response.status,
-                            error_text
+                            error_text,
                         )
                         raise Exception(f"API error: {response.status}")
-                    
+
                     result = await response.json()
-            
+
             _LOGGER.debug("Received response from Moondream AI: %s", result)
-            
+
             # Parse the response
             objects = result.get("objects", [])
             request_id = result.get("request_id", "")
-            
+
             # Calculate results
             object_count = len(objects)
             object_present = object_count > 0
-            
+
             # Get max confidence if objects found
             confidence = 0.0
             if objects:
                 confidences = [obj.get("confidence", 0) for obj in objects]
                 confidence = max(confidences) if confidences else 0.0
-            
+
             return {
                 "object_present": object_present,
                 "object_count": object_count,
@@ -112,7 +112,7 @@ class MoondreamAIClient(AIServiceClient):
                 "confidence": confidence,
             }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _LOGGER.error("Timeout communicating with Moondream AI")
             raise
         except Exception as err:
@@ -123,7 +123,9 @@ class MoondreamAIClient(AIServiceClient):
 class LocalAIClient(AIServiceClient):
     """Client for local AI models (placeholder for future implementation)."""
 
-    async def analyze_image(self, image_data: bytes, detection_object: str) -> dict[str, Any]:
+    async def analyze_image(
+        self, image_data: bytes, detection_object: str
+    ) -> dict[str, Any]:
         """Analyze image using local AI model."""
         _LOGGER.warning("Local AI is not yet implemented")
         return {
@@ -141,7 +143,7 @@ def get_ai_client(service: str, api_key: str | None = None) -> AIServiceClient:
         if not api_key:
             raise ValueError("API key is required for Moondream AI")
         return MoondreamAIClient(api_key)
-    elif service == AI_SERVICE_LOCAL:
+    if service == AI_SERVICE_LOCAL:
         return LocalAIClient()
-    else:
-        raise ValueError(f"Unknown AI service: {service}")
+
+    raise ValueError(f"Unknown AI service: {service}")
