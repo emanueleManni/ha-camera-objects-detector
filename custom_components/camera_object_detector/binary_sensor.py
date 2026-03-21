@@ -150,9 +150,13 @@ class CameraObjectDetectorBinarySensor(
 
         self._camera_entity = config_entry.data[CONF_CAMERA_ENTITY]
         detection_object = config_entry.data.get(CONF_DETECTION_OBJECT, DEFAULT_DETECTION_OBJECT)
+        
+        # Extract camera name from entity_id (e.g., "camera.carraio" -> "carraio")
+        camera_name = self._camera_entity.split(".")[-1] if "." in self._camera_entity else self._camera_entity
 
         self._attr_unique_id = f"{config_entry.entry_id}_{detection_object}"
-        self._attr_name = f"{detection_object.replace('_', ' ').title()} Detection"
+        # Include camera name in the binary sensor name
+        self._attr_name = f"{camera_name} {detection_object.replace('_', ' ').title()} Detection"
 
     @property
     def is_on(self) -> bool | None:

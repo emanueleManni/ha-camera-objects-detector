@@ -39,5 +39,46 @@
     "error": {
       "api_key_required": "API Key richiesta per Moondream AI"
     }
+  },
+  "services": {
+    "detect_object": {
+      "name": "Rileva Oggetto",
+      "description": "Rileva un oggetto nell'immagine di una telecamera su richiesta",
+      "fields": {
+        "camera_entity": {
+          "name": "Telecamera",
+          "description": "Entità telecamera da cui ottenere l'immagine"
+        },
+        "detection_object": {
+          "name": "Oggetto da Rilevare",
+          "description": "Nome dell'oggetto da rilevare (es. 'drying_rack', 'person', 'car')"
+        },
+        "ai_service": {
+          "name": "Servizio AI",
+          "description": "Servizio AI da utilizzare (opzionale, usa quello predefinito se non specificato)"
+        },
+        "api_key": {
+          "name": "API Key",
+          "description": "Chiave API per il servizio AI (opzionale, usa quella predefinita se non specificata)"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "camera_not_found": {
+      "message": "Entità telecamera non trovata"
+    },
+    "no_ai_service": {
+      "message": "Nessun servizio AI specificato e nessuna configurazione predefinita trovata"
+    },
+    "image_fetch_failed": {
+      "message": "Impossibile ottenere l'immagine dalla telecamera"
+    },
+    "ai_client_error": {
+      "message": "Errore del client AI: {error}"
+    },
+    "detection_failed": {
+      "message": "Rilevamento fallito: {error}"
+    }
   }
 }

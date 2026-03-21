@@ -2,6 +2,9 @@
 
 DOMAIN = "camera_object_detector"
 
+# Services
+SERVICE_DETECT_OBJECT = "detect_object"
+
 # Configuration
 CONF_AI_SERVICE = "ai_service"
 CONF_API_KEY = "api_key"
@@ -49,3 +52,7 @@ ATTR_REQUEST_ID = "request_id"  # NEW: ID richiesta Moondream
 ATTR_LAST_IMAGE_TIME = "last_image_time"
 ATTR_AI_SERVICE = "ai_service"
 ATTR_DETECTION_OBJECT = "detection_object"  # NEW: oggetto cercato
+
+# Service fields
+ATTR_OBJECT_PRESENT = "object_present"
+ATTR_IMAGE_TIME = "image_time"

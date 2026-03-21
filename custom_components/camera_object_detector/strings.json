@@ -40,5 +40,46 @@
     "error": {
       "api_key_required": "API Key required for Moondream AI"
     }
+  },
+  "services": {
+    "detect_object": {
+      "name": "Detect Object",
+      "description": "Detect an object in a camera image on-demand",
+      "fields": {
+        "camera_entity": {
+          "name": "Camera",
+          "description": "Camera entity to get the image from"
+        },
+        "detection_object": {
+          "name": "Object to Detect",
+          "description": "Name of the object to detect (e.g., 'drying_rack', 'person', 'car')"
+        },
+        "ai_service": {
+          "name": "AI Service",
+          "description": "AI service to use (optional, uses default if not specified)"
+        },
+        "api_key": {
+          "name": "API Key",
+          "description": "API key for the AI service (optional, uses default if not specified)"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "camera_not_found": {
+      "message": "Camera entity not found"
+    },
+    "no_ai_service": {
+      "message": "No AI service specified and no default configuration found"
+    },
+    "image_fetch_failed": {
+      "message": "Failed to get image from camera"
+    },
+    "ai_client_error": {
+      "message": "AI client error: {error}"
+    },
+    "detection_failed": {
+      "message": "Detection failed: {error}"
+    }
   }
 }
