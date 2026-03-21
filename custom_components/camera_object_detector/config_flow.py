@@ -20,6 +20,7 @@ from .const import (
     CONF_AI_SERVICE,
     CONF_CAMERA_ENTITY,
     CONF_DETECTION_OBJECT,
+    CONF_DISABLE_BINARY_SENSOR,
     CONF_SCAN_INTERVAL,
     DEFAULT_AI_SERVICE,
     DEFAULT_DETECTION_OBJECT,
@@ -87,7 +88,10 @@ class CameraObjectDetectorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Optional(
                     CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
-                ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=30, max=86400)),  # Max 24 ore
+                vol.Optional(
+                    CONF_DISABLE_BINARY_SENSOR, default=False
+                ): cv.boolean,
             }
         )
 

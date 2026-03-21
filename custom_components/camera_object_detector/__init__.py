@@ -28,6 +28,7 @@ from .const import (
     CONF_AI_SERVICE,
     CONF_CAMERA_ENTITY,
     CONF_DETECTION_OBJECT,
+    CONF_DISABLE_BINARY_SENSOR,
     DOMAIN,
     SERVICE_DETECT_OBJECT,
 )
@@ -74,7 +75,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Setup platforms only if binary sensor is not disabled
+    disable_binary_sensor = entry.data.get(CONF_DISABLE_BINARY_SENSOR, False)
+    
+    if not disable_binary_sensor:
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        _LOGGER.info("Binary sensor enabled for entry %s", entry.entry_id)
+    else:
+        _LOGGER.info("Binary sensor disabled for entry %s - using action only", entry.entry_id)
 
     # Register service only once (on first integration setup)
     if not hass.services.has_service(DOMAIN, SERVICE_DETECT_OBJECT):
@@ -108,7 +116,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             if not ai_service:
                 raise ServiceValidationError(
-                    "No AI service specified and no default configuration found",
+                    "No AI service specified. Either configure the integration via UI "
+                    "or specify 'ai_service' and 'api_key' in the service call",
                     translation_domain=DOMAIN,
                     translation_key="no_ai_service",
                 )
@@ -199,7 +208,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+    # Only unload platforms if binary sensor was enabled
+    disable_binary_sensor = entry.data.get(CONF_DISABLE_BINARY_SENSOR, False)
+    
+    if not disable_binary_sensor:
+        unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    else:
+        # Action-only mode: no platforms to unload
+        unload_ok = True
+    
+    if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
         
         # Unregister service if no more config entries exist

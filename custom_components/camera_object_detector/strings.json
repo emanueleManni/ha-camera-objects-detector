@@ -10,7 +10,8 @@
           "ai_service": "AI Service",
           "api_key": "API Key (for Moondream AI)",
           "detection_object": "Object to Detect",
-          "scan_interval": "Scan Interval (seconds)"
+          "scan_interval": "Scan Interval (seconds)",
+          "disable_binary_sensor": "Disable Binary Sensor (use action only)"
         }
       }
     },
@@ -33,7 +34,8 @@
           "ai_service": "AI Service",
           "api_key": "API Key (for Moondream AI)",
           "detection_object": "Object to Detect",
-          "scan_interval": "Scan Interval (seconds)"
+          "scan_interval": "Scan Interval (seconds)",
+          "disable_binary_sensor": "Disable Binary Sensor (use action only)"
         }
       }
     },
@@ -70,7 +72,7 @@
       "message": "Camera entity not found"
     },
     "no_ai_service": {
-      "message": "No AI service specified and no default configuration found"
+      "message": "No AI service specified. Either configure the integration via UI or specify 'ai_service' and 'api_key' in the service call"
     },
     "image_fetch_failed": {
       "message": "Failed to get image from camera"

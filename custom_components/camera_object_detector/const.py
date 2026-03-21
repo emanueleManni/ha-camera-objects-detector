@@ -11,6 +11,7 @@ CONF_API_KEY = "api_key"
 CONF_CAMERA_ENTITY = "camera_entity"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_DETECTION_OBJECT = "detection_object"  # NEW: oggetto da rilevare
+CONF_DISABLE_BINARY_SENSOR = "disable_binary_sensor"  # NEW: disabilita binary sensor
 
 # AI Services
 AI_SERVICE_MOONDREAM = "moondream"

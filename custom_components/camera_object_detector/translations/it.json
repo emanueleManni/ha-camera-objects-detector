@@ -9,7 +9,8 @@
           "ai_service": "Servizio AI",
           "api_key": "API Key (per Moondream AI)",
           "detection_object": "Oggetto da Rilevare",
-          "scan_interval": "Intervallo di scansione (secondi)"
+          "scan_interval": "Intervallo di scansione (secondi)",
+          "disable_binary_sensor": "Disabilita Binary Sensor (usa solo action)"
         }
       }
     },
@@ -32,7 +33,8 @@
           "ai_service": "Servizio AI",
           "api_key": "API Key (per Moondream AI)",
           "detection_object": "Oggetto da Rilevare",
-          "scan_interval": "Intervallo di scansione (secondi)"
+          "scan_interval": "Intervallo di scansione (secondi)",
+          "disable_binary_sensor": "Disabilita Binary Sensor (usa solo action)"
         }
       }
     },
@@ -69,7 +71,7 @@
       "message": "Entità telecamera non trovata"
     },
     "no_ai_service": {
-      "message": "Nessun servizio AI specificato e nessuna configurazione predefinita trovata"
+      "message": "Nessun servizio AI specificato. Configura l'integrazione tramite UI oppure specifica 'ai_service' e 'api_key' nella chiamata del servizio"
     },
     "image_fetch_failed": {
       "message": "Impossibile ottenere l'immagine dalla telecamera"
