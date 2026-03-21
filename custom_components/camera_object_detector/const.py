@@ -36,6 +36,11 @@ MOONDREAM_SUPPORTED_OBJECTS = [
     "bottle",
 ]  # Lista oggetti comuni, ma moondream supporta qualsiasi stringa
 
+# Minimum confidence threshold for object detection
+# Objects below this threshold are considered as "not detected"
+# Moondream API returns objects with confidence 0.0 when nothing is found
+MIN_CONFIDENCE_THRESHOLD = 0.5  # 50%
+
 # Attributes
 ATTR_CONFIDENCE = "confidence"
 ATTR_DETECTED_OBJECTS = "detected_objects"  # NEW: lista oggetti rilevati
