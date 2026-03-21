@@ -2,7 +2,7 @@
 
 ## 📋 Prerequisiti
 
-- ✅ Home Assistant 2024.1.0 o superiore
+- ✅ Home Assistant 2026.3.0 o superiore
 - ✅ Una o più telecamere configurate in Home Assistant
 - ✅ Account Moondream AI (gratuito o a pagamento)
 - ✅ Connessione Internet
@@ -38,49 +38,120 @@
 
 💡 **Nota**: Il piano gratuito include crediti per testare!
 
-### Step 3: Configura l'integrazione
+### Step 3: Configura l'integrazione ⚠️ OBBLIGATORIO
+
+**⚠️ Questo step è OBBLIGATORIO** anche se vuoi usare solo l'action `detect_object` senza binary sensor!
 
 1. Vai su **Impostazioni** → **Dispositivi e Servizi**
 2. Clicca **+ Aggiungi integrazione** (in basso a destra)
 3. Cerca "**Camera Object Detector**"
 4. Compila il form:
-   - **Telecamera**: `camera.giardino` (seleziona la tua)
+   - **Telecamera**: `camera.carraio` (seleziona la tua)
    - **Servizio AI**: `Moondream AI (Cloud)`
    - **API Key**: incolla la key di Moondream
-   - **Oggetto da Rilevare**: seleziona dal menu (es. `Drying Rack`) o inserisci un nome custom
-   - **Intervallo**: `300` secondi (5 minuti)
+   - **Oggetto da Rilevare**: seleziona dal menu (es. `drying_rack`) o inserisci un nome custom
+   - **Intervallo**: `300` secondi (5 minuti) - o `86400` (24 ore) se vuoi query rarissime
+   - **💡 Disable Binary Sensor**: Attiva se vuoi SOLO l'action senza query automatiche ([dettagli](ACTION_ONLY_MODE.md))
 5. Clicca **Invia**
 6. ✅ Fatto!
+
+**Risultato:**
+- Se "Disable Binary Sensor" = NO: Viene creato `binary_sensor.carraio_drying_rack_detection`
+- Se "Disable Binary Sensor" = SÌ: **Nessun binary sensor**, solo action disponibile (risparmio API!)
+- L'action `detect_object` è **sempre** disponibile in entrambi i casi
+
+💡 **Want Action Only?** Leggi la [guida completa "Action Only Mode"](ACTION_ONLY_MODE.md) per usare solo l'action senza query automatiche!
 
 💡 **Oggetti supportati**: drying_rack, person, car, bicycle, dog, cat, chair, table, umbrella, bag, bottle, e molti altri!
 
 ### Step 4: Verifica che funzioni
 
-1. Vai su **Strumenti per sviluppatori** → **Stati**
-2. Cerca `binary_object_count`, `detected_objects`, `detection_object`, etc.
+**Opzione A - Testa il Binary Sensor**
 
-💡 **Tip**: Controlla `detected_objects` per vedere le coordinate bounding box e la confidenza di ogni oggetto rilevato!
+1. Vai su **Strumenti per sviluppatori** → **Stati**
+2. Cerca `binary_sensor.carraio_drying_rack_detection`
 3. Dovresti vedere:
    - Stato: `on` oppure `off`
-   - Attributi: `confidence`, `explanation`, etc.
+   - Attributi: `confidence`, `object_count`, `detected_objects`, `detection_object`, etc.
+
+💡 **Tip**: Controlla `detected_objects` per vedere le coordinate bounding box e la confidenza di ogni oggetto rilevato!
+
+**Opzione B - Testa l'Action detect_object**
+
+1. Vai su **Strumenti per sviluppatori** → **Servizi**
+2. Cerca il servizio: `camera_object_detector.detect_object`
+3. Inserisci i dati:
+   ```yaml
+   camera_entity: camera.carraio
+   detection_object: drying_rack
+   ```
+4. Clicca **"Chiama servizio"**
+5. Guarda la risposta (Response data):
+   ```yaml
+   object_present: true
+   object_count: 1
+   confidence: 1.0
+   image_time: "2024-03-21T15:30:00"
+   detected_objects: [...]
+   ```
+
+✅ Se vedi la risposta, funziona perfettamente!
 
 ### Step 5: Prima automazione
 
-Copia questo in `automations.yaml` o crea tramite UI:
+**Opzione A - Usa il Binary Sensor (monitoraggio continuo)**
+
+Ideale se vuoi monitorare costantemente lo stendino con l'intervallo configurato:
 
 ```yaml
 automation:
-  - alias: "Test Stendino"
+  - alias: "Test Stendino - Binary Sensor"
     trigger:
       platform: state
-      entity_id: binary_sensor.stendino_presente
+      entity_id: binary_sensor.carraio_drying_rack_detection
       to: "on"
     action:
-      service: notify.persistent_notification
+      service: notify.notify
       data:
-        message: "🎉 Stendino rilevato in giardino!"
+        message: "🎉 Stendino rilevato!"
         title: "Stendino Detector"
 ```
+
+**Opzione B - Usa l'Action detect_object (on-demand)**
+
+Ideale se vuoi controllare solo quando serve (es: quando piove):
+
+```yaml
+automation:
+  - alias: "Promemoria Stendino"
+    trigger:
+      # Quando inizia a piovere
+      - platform: numeric_state
+        entity_id: sensor.gw1100a_rain_rate  # Sensore pioggia
+        above: 0.1
+      # Oppure alle 20:00
+      - platform: time
+        at: "20:00:00"
+    action:
+      # Rileva stendino on-demand (chiama API solo quando necessario)
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+        response_variable: detection
+      
+      # Solo se rilevato
+      - condition: template
+        value_template: "{{ detection.object_present }}"
+      
+      # Notifica
+      - service: notify.notify
+        data:
+          title: "⚠️ Ritira lo stendino!"
+          message: "Lo stendino è ancora fuori!"
+```
+
+**💡 Vantaggio dell'Action**: Chiama l'API solo quando serve, risparmiando costi!
 
 ## 🎨 Aggiungi una Card
 
@@ -107,7 +178,15 @@ automation:
       entity_id: weather.home
       to: "rainy"
     condition:
-      condition: state
+    ⚠️ Errore: "No AI service specified"
+
+➡️ **Causa**: Non hai configurato l'integrazione tramite UI (Step 3)
+
+➡️ **Soluzione**: Vai in **Impostazioni** → **Dispositivi e Servizi** → **+ Aggiungi Integrazione** → Cerca "Camera Object Detector" e configura
+
+➡️ **Dettagli completi**: Leggi [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)
+
+###   condition: state
       entity_id: binary_sensor.stendino_presente
       state: "on"
     action:
@@ -182,9 +261,15 @@ python tests/test_moondream_standalone.py foto.jpg YOUR_API_KEY drying_rack
 
 ## 🎓 Prossimi Passi
 
-1. ✅ Leggi il [README completo](README.md) per esempi avanzati
-2. ✅ Controlla [examples.md](examples.md) per più automazioni
-3. ✅ Unisciti alla community per condividere idee!
+1. ✅ **Modalità Action Only?** Leggi **[ACTION_ONLY_MODE.md](ACTION_ONLY_MODE.md)** per disabilitare il binary sensor e risparmiare sui costi
+2. ✅ Leggi la **[Guida Action Completa](ACTION_GUIDE.md)** per usare `detect_object` nelle automazioni
+3. ✅ Vedi **[Esempi di Automazioni](automation_example.yaml)** per casi d'uso avanzati
+4. ✅ Se hai problemi, leggi **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
+5. ✅ Leggi il [README completo](README.md) per dettagli tecnici
+6. ✅ Controlla [examples.md](examples.md) per più automazioni
+7. ✅ Unisciti alla community per condividere idee!
+
+## 📚 Documentazione
 
 ## 💬 Supporto
 

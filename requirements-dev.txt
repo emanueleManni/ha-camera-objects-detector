@@ -18,10 +18,9 @@ isort>=5.12.0
 flake8>=6.0.0
 mypy>=1.5.0
 
-# Optional: Home Assistant testing framework (requires Python 3.13+)
-# Uncomment only if you have Python 3.13+ and want full HA integration testing:
-# pytest-homeassistant-custom-component>=0.13.0
-# homeassistant>=2024.1.0
+# Home Assistant for IntelliSense and type checking
+# This provides autocompletion and type hints without running HA
+homeassistant>=2026.3.0
 
 # Optional: Additional linting
 # pylint>=2.17.0

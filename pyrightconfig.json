@@ -1,0 +1,10 @@
+{
+  "pythonVersion": "3.12",
+  "pythonPlatform": "All",
+  "typeCheckingMode": "basic",
+  "executionEnvironments": [
+    {
+      "root": "custom_components"
+    }
+  ]
+}

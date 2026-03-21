@@ -4,11 +4,14 @@ Integrazione custom per Home Assistant per rilevare automaticamente oggetti (ste
 
 ## Caratteristiche
 
+- **Binary Sensor** per monitoraggio continuo con intervallo configurabile
+- **🆕 Modalità "Action Only"** - disabilita binary sensor per usare solo l'action on-demand
+- **Action `detect_object`** per rilevamento on-demand (risparmia sui costi evitanto chiamete in condizioni non anomale)
 - **Rilevamento configurabile** di qualsiasi oggetto tramite AI
 - **Object detection** con bounding box e confidenza
 - **Supporto per telecamere Home Assistant** (1920x1080 e altre risoluzioni)
 - **Integrazione con Moondream AI SDK** per analisi cloud delle immagini
-- **Aggiornamento periodico** configurabile (da 30 secondi a 1 ora)
+- **Aggiornamento periodico** configurabile (da 30 secondi a 24 ore)
 - **Attributi dettagliati**: conteggio oggetti, coordinate bounding box, confidenza, timestamp
 - **Icone personalizzate**: gruccia quando presente, gruccia barrata quando assente
 - **Multilingua**: italiano e inglese
@@ -55,16 +58,73 @@ Integrazione custom per Home Assistant per rilevare automaticamente oggetti (ste
 
 5. Clicca su **Invia**
 
-### 3. Utilizza il sensore
+### 3. Utilizza il sensore e l'action
 
-Dopo la configurazione, avrai un nuovo sensore binario:
+Dopo la configurazione, avrai:
+
+**A) Binary Sensor (monitoraggio continuo)**
 
 ```text
-binary_sensor.stendino_presente
+binary_sensor.carraio_drying_rack_detection
 ```
 
-**Stati possibili:**
+Il nome include la telecamera per permettere configurazioni multiple (es: `carraio`, `sala`, ecc.)
 
+**B) Action `detect_object` (on-demand)**
+
+Interroga l'AI solo quando serve, risparmiando sui costi API:
+
+```yaml
+service: camera_object_detector.detect_object
+data:
+  camera_entity: camera.carraio
+  detection_object: "drying_rack"
+response_variable: result
+```
+
+**Stati possibili (binary sensor):**
+🆕 Action on-demand: Promemoria stendino quando piove o è tardi
+
+**Vantaggio**: Interroga l'API solo quando serve, invece che ogni N secondi!
+
+```yaml
+automation:
+  - alias: "Promemoria Stendino Smart"
+    trigger:
+      # Quando inizia a piovere (sensore meteo)
+      - platform: numeric_state
+        entity_id: sensor.gw1100a_rain_rate
+        above: 0.1
+      
+      # Oppure alle 20:00, 21:00, 22:00
+      - platform: time
+        at:
+          - "20:00:00"
+          - "21:00:00"
+          - "22:00:00"
+    
+    action:
+      # Rileva stendino ON-DEMAND (chiama API solo ora)
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+        response_variable: detection
+      
+      # Solo se rilevato
+      - condition: template
+        value_template: "{{ detection.object_present }}"
+      
+      # Invia notifica
+      - service: notify.notify
+        data:
+          title: "⚠️ Ritira lo stendino!"
+          message: "Lo stendino è ancora fuori!"
+```
+
+**💰 Risparmio**: Con l'action chiami l'API solo 3-4 volte al giorno invece di ~288 volte (con intervallo 5 min)!
+
+### Binary Sensor: 
 - `on` = Oggetto rilevato in giardino
 - `off` = Oggetto non rilevato
 
@@ -104,7 +164,14 @@ automation:
 
 ```yaml
 automation:
-  - alias: "Promemoria stendino al tramonto"
+  -📚 Documentazione Completa
+
+- **🚀 [QUICKSTART.md](QUICKSTART.md)** - Guida rapida installazione e primi passi
+- **📖 [ACTION_GUIDE.md](ACTION_GUIDE.md)** - Guida completa all'uso dell'action `detect_object`
+- **📝 [automation_example.yaml](automation_example.yaml)** - Esempi di automazioni avanzate
+- **🔧 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Risoluzione problemi comuni
+
+##  alias: "Promemoria stendino al tramonto"
     trigger:
       - platform: sun
         event: sunset

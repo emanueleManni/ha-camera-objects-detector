@@ -1,0 +1,332 @@
+# Esempio di automazione per il rilevamento dello stendino
+# Questo file contiene esempi di automazioni per richiamare il servizio 
+# camera_object_detector.detect_object in base a condizioni specifiche.
+
+# =============================================================================
+# OPZIONE 1: Usando Met.no per le previsioni di pioggia
+# =============================================================================
+# Questa automazione controlla se sta per piovere (usando previsioni Met.no)
+# o se è una certa ora (20:00, 21:00, 22:00) e verifica se lo stendino è presente.
+
+automation:
+  - id: check_drying_rack_metno
+    alias: "Controlla Stendino (Met.no)"
+    description: "Controlla se lo stendino è presente quando sta per piovere o dopo le 20:00"
+    
+    trigger:
+      # Trigger 1: Ogni ora dalle 20:00 alle 22:00
+      - platform: time
+        at:
+          - "20:00:00"
+          - "21:00:00"
+          - "22:00:00"
+        id: "time_trigger"
+      
+      # Trigger 2: Quando Met.no prevede pioggia
+      # Nota: Sostituire 'weather.home' con il tuo weather entity di Met.no
+      - platform: state
+        entity_id: weather.home
+        to: 
+          - "rainy"
+          - "pouring"
+          - "lightning-rainy"
+        id: "weather_trigger"
+    
+    condition:
+      # Esegui solo se è giorno (opzionale, rimuovi se vuoi controllare anche di notte)
+      - condition: sun
+        after: sunrise
+        before: sunset
+    
+    action:
+      # Passo 1: Chiama il servizio per rilevare lo stendino sulla telecamera carraio
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+          # OPZIONALE: Specifica questi parametri solo se non hai configurato il component tramite UI
+          # ai_service: "moondream"
+          # api_key: "la_tua_api_key_moondream"
+        response_variable: detection_result_carraio
+      
+      # Passo 2: Verifica se lo stendino è stato rilevato
+      - condition: template
+        value_template: "{{ detection_result_carraio.object_present }}"
+      
+      # Passo 3: Invia una notifica se lo stendino è presente
+      - service: notify.notify
+        data:
+          title: "⚠️ Stendino rilevato!"
+          message: >
+            Lo stendino è ancora fuori nel carraio!
+            {% if trigger.id == 'weather_trigger' %}
+            Motivo: Sta per piovere
+            {% else %}
+            Motivo: Sono le {{ now().strftime('%H:%M') }}
+            {% endif %}
+            Oggetti rilevati: {{ detection_result_carraio.object_count }}
+            Confidenza: {{ detection_result_carraio.confidence }}
+
+
+# =============================================================================
+# OPZIONE 2: Usando sensore pioggia GW1100A
+# =============================================================================
+# Questa automazione usa il sensore di pioggia della stazione meteo GW1100A
+# per verificare se sta piovendo (dato certo invece di previsione).
+
+  - id: check_drying_rack_rain_sensor
+    alias: "Controlla Stendino (Sensore Pioggia)"
+    description: "Controlla se lo stendino è presente quando piove o dopo le 20:00"
+    
+    trigger:
+      # Trigger 1: Ogni ora dalle 20:00 alle 22:00
+      - platform: time
+        at:
+          - "20:00:00"
+          - "21:00:00"
+          - "22:00:00"
+        id: "time_trigger"
+      
+      # Trigger 2: Quando il sensore di pioggia rileva pioggia
+      # Usa rain_rate (mm/h) - rileva quando inizia a piovere
+      - platform: numeric_state
+        entity_id: sensor.gw1100a_rain_rate
+        above: 0.1  # Soglia minima in mm/h per considerare che sta piovendo
+        id: "rain_trigger"
+    
+    action:
+      # Passo 1: Chiama il servizio per rilevare lo stendino
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+        response_variable: detection_result
+      
+      # Passo 2: Verifica se lo stendino è stato rilevato
+      - condition: template
+        value_template: "{{ detection_result.object_present }}"
+      
+      # Passo 3: Invia notifica
+      - service: notify.notify
+        data:
+          title: "⚠️ Stendino fuori!"
+          message: >
+            Lo stendino è ancora fuori!
+            {% if trigger.id == 'rain_trigger' %}
+            Motivo: Sta piovendo ({{ states('sensor.gw1100a_rain_rate') }} mm/h)
+            {% else %}
+            Motivo: Sono le {{ now().strftime('%H:%M') }}
+            {% endif %}
+            Rilevati {{ detection_result.object_count }} oggetti
+            Ultima rilevazione: {{ detection_result.image_time }}
+
+
+# =============================================================================
+# OPZIONE 3: Controllo su più telecamere
+# =============================================================================
+# Questa automazione controlla lo stendino su più telecamere (carraio e sala)
+
+  - id: check_drying_rack_multiple_cameras
+    alias: "Controlla Stendino (Più Telecamere)"
+    description: "Controlla lo stendino su più telecamere quando piove o a certi orari"
+    
+    trigger:
+      - platform: time
+        at:
+          - "20:00:00"
+          - "21:00:00"
+          - "22:00:00"
+      
+      - platform: numeric_state
+        entity_id: sensor.gw1100a_rain_rate
+        above: 0.1
+    
+    action:
+      # Controlla telecamera carraio
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+        response_variable: carraio_result
+      
+      # Controlla telecamera sala
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.sala
+          detection_object: "drying_rack"
+        response_variable: sala_result
+      
+      # Invia notifica se rilevato in almeno una telecamera
+      - choose:
+          # Caso 1: Rilevato nel carraio
+          - conditions:
+              - condition: template
+                value_template: "{{ carraio_result.object_present }}"
+            sequence:
+              - service: notify.notify
+                data:
+                  title: "⚠️ Stendino rilevato nel Carraio"
+                  message: >
+                    Lo stendino è presente nel carraio!
+                    Oggetti: {{ carraio_result.object_count }}
+                    Confidenza: {{ carraio_result.confidence }}
+          
+          # Caso 2: Rilevato nella sala
+          - conditions:
+              - condition: template
+                value_template: "{{ sala_result.object_present }}"
+            sequence:
+              - service: notify.notify
+                data:
+                  title: "⚠️ Stendino rilevato nella Sala"
+                  message: >
+                    Lo stendino è presente nella sala!
+                    Oggetti: {{ sala_result.object_count }}
+                    Confidenza: {{ sala_result.confidence }}
+
+
+# =============================================================================
+# OPZIONE 4: Automazione avanzata con logica più complessa
+# =============================================================================
+# Questa automazione combina più condizioni e usa blueprint pattern
+
+  - id: smart_drying_rack_reminder
+    alias: "Promemoria Smart Stendino"
+    description: "Sistema intelligente per ricordare di ritirare lo stendino"
+    
+    trigger:
+      # Controlla ogni 30 minuti dopo le 19:00
+      - platform: time_pattern
+        minutes: "/30"
+    
+    condition:
+      # Solo tra le 19:00 e le 23:00
+      - condition: time
+        after: "19:00:00"
+        before: "23:00:00"
+      
+      # E solo se:
+      - condition: or
+        conditions:
+          # Sta piovendo
+          - condition: numeric_state
+            entity_id: sensor.gw1100a_rain_rate
+            above: 0
+          
+          # O Met.no prevede pioggia nelle prossime ore
+          - condition: state
+            entity_id: weather.home
+            state: 
+              - "rainy"
+              - "pouring"
+          
+          # O è passata una certa ora
+          - condition: time
+            after: "21:00:00"
+    
+    action:
+      # Rilevamento stendino
+      - service: camera_object_detector.detect_object
+        data:
+          camera_entity: camera.carraio
+          detection_object: "drying_rack"
+        response_variable: drying_rack_check
+      
+      # Solo se rilevato
+      - condition: template
+        value_template: "{{ drying_rack_check.object_present }}"
+      
+      # Determina il motivo del promemoria
+      - variables:
+          reason: >
+            {% if states('sensor.gw1100a_rain_rate') | float > 0 %}
+            Sta piovendo ({{ states('sensor.gw1100a_rain_rate') }} mm/h)
+            {% elif is_state('weather.home', ['rainy', 'pouring']) %}
+            Pioggia prevista a breve
+            {% else %}
+            È tardi ({{ now().strftime('%H:%M') }})
+            {% endif %}
+      
+      # Invia notifica persistente con azioni
+      - service: notify.mobile_app_your_phone  # Sostituisci con il tuo dispositivo
+        data:
+          title: "⚠️ Ritira lo stendino!"
+          message: "{{ reason }}"
+          data:
+            # Notifica persistente
+            tag: "drying_rack_alert"
+            # Azioni rapide (solo per app mobile)
+            actions:
+              - action: "RACK_DONE"
+                title: "Fatto ✅"
+              - action: "RACK_SNOOZE"
+                title: "Ricordamelo tra 15 min"
+      
+      # Log per debug
+      - service: logbook.log
+        data:
+          name: "Stendino Detector"
+          message: "Stendino rilevato: {{ drying_rack_check.object_count }} oggetti. {{ reason }}"
+
+
+# =============================================================================
+# AUTOMAZIONE HELPER: Gestione azioni notifica
+# =============================================================================
+# Questa automazione gestisce le azioni delle notifiche (Es: "Fatto", "Snooze")
+
+  - id: handle_drying_rack_notification_actions
+    alias: "Gestisci Azioni Notifica Stendino"
+    
+    trigger:
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "RACK_DONE"
+      
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "RACK_SNOOZE"
+    
+    action:
+      - choose:
+          # Caso 1: Utente ha ritirato lo stendino
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.action == 'RACK_DONE' }}"
+            sequence:
+              - service: notify.mobile_app_your_phone
+                data:
+                  message: "clear_notification"
+                  data:
+                    tag: "drying_rack_alert"
+              
+              - service: logbook.log
+                data:
+                  name: "Stendino"
+                  message: "Stendino ritirato dall'utente"
+          
+          # Caso 2: Snooze - ricontrolla tra 15 minuti
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.action == 'RACK_SNOOZE' }}"
+            sequence:
+              - delay:
+                  minutes: 15
+              
+              # Ri-verifica dopo 15 minuti
+              - service: camera_object_detector.detect_object
+                data:
+                  camera_entity: camera.carraio
+                  detection_object: "drying_rack"
+                response_variable: snooze_check
+              
+              - condition: template
+                value_template: "{{ snooze_check.object_present }}"
+              
+              - service: notify.mobile_app_your_phone
+                data:
+                  title: "⚠️ Stendino ancora fuori!"
+                  message: "Lo stendino è ancora presente fuori"
+                  data:
+                    tag: "drying_rack_alert"
