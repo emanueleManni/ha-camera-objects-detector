@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import asyncio
-import io
+import base64
 import logging
 from typing import Any
 
-import moondream as md
-from PIL import Image
+import aiohttp
 
 # Import constants with fallback for standalone usage
 try:
@@ -33,19 +31,20 @@ class AIServiceClient(ABC):
 
 
 class MoondreamAIClient(AIServiceClient):
-    """Client for Moondream AI service using SDK.
+    """Client for Moondream AI service using HTTP API.
     
     NOTE: Moondream API does NOT return confidence scores.
     Detection logic: if object appears in response list, it's detected.
     Empty list = nothing detected.
     """
 
+    API_URL = "https://api.moondream.ai/v1/detect"
+
     def __init__(self, api_key: str, timeout: int = 30) -> None:
         """Initialize the Moondream AI client."""
         self.api_key = api_key
         self.timeout = timeout
-        self.model = md.vl(api_key=api_key)
-        _LOGGER.info("Moondream SDK initialized successfully")
+        _LOGGER.info("Moondream HTTP API client initialized")
 
     async def analyze_image(
         self, image_data: bytes, detection_object: str
@@ -60,38 +59,60 @@ class MoondreamAIClient(AIServiceClient):
             dict with keys:
                 - object_present: bool (True if at least one object detected)
                 - object_count: int (number of objects detected)
-                - detected_objects: list of objects with confidence and bbox
-                - request_id: str (empty, SDK doesn't provide it)
+                - detected_objects: list of objects with bounding boxes
+                - request_id: str (empty, API doesn't provide it)
                 - confidence: float (1.0 if objects found, else 0.0)
         """
-        _LOGGER.debug("Detecting '%s' with Moondream SDK", detection_object)
+        _LOGGER.debug("Detecting '%s' with Moondream HTTP API", detection_object)
         
         try:
-            # Convert bytes to PIL Image
-            image = Image.open(io.BytesIO(image_data))
-            
-            _LOGGER.debug("Image loaded: format=%s, size=%s, mode=%s", 
-                         image.format, image.size, image.mode)
-            
-            # Run detection in executor to avoid blocking
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                None, self.model.detect, image, detection_object
-            )
-            
-            _LOGGER.debug("SDK response: %s", result)
-            
-            # Parse the response from Moondream SDK
+            # Encode image to base64
+            image_b64 = base64.b64encode(image_data).decode("utf-8")
+
+            # Prepare request headers (using X-Moondream-Auth as per documentation)
+            headers = {
+                "X-Moondream-Auth": self.api_key,
+                "Content-Type": "application/json",
+            }
+
+            # Prepare request payload
+            payload = {
+                "image_url": f"data:image/jpeg;base64,{image_b64}",
+                "object": detection_object,
+            }
+
+            # Make API request
+            timeout = aiohttp.ClientTimeout(total=self.timeout)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(
+                    self.API_URL,
+                    json=payload,
+                    headers=headers,
+                ) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        _LOGGER.error(
+                            "Moondream API error (status %s): %s",
+                            response.status,
+                            error_text,
+                        )
+                        raise Exception(f"API error: {response.status} - {error_text}")
+
+                    result = await response.json()
+
+            _LOGGER.debug("API response: %s", result)
+
+            # Parse the response from Moondream API
             # Format: {"objects": [{"x_min": float, "y_min": float, "x_max": float, "y_max": float}]}
             # - Objects are in normalized coordinates (0-1)
             # - NO confidence field - if object is in the list, it's detected
-            # - NO request_id field
+            # - NO request_id field  
             # - Empty list means nothing detected
             raw_objects = result.get("objects", [])
-            request_id = ""  # SDK doesn't return request_id
             
-            # Convert from SDK format (x_min, y_min, x_max, y_max) to our format
-            # Calculate pixel coordinates and add confidence=1.0 for all detected objects
+            # Convert from API format to our format
+            # Note: We don't have image dimensions, so we keep normalized coordinates
+            # Home Assistant can scale them if needed
             detected_objects = []
             for obj in raw_objects:
                 # Get normalized coordinates
@@ -100,25 +121,18 @@ class MoondreamAIClient(AIServiceClient):
                 x_max = obj.get("x_max", 0)
                 y_max = obj.get("y_max", 0)
                 
-                # Convert to pixel coordinates
-                img_width, img_height = image.size
-                x = int(x_min * img_width)
-                y = int(y_min * img_height)
-                width = int((x_max - x_min) * img_width)
-                height = int((y_max - y_min) * img_height)
-                
-                # Add to detected objects with confidence=1.0
-                # (SDK doesn't provide confidence, but if it's in the list, it's detected)
+                # Store with both normalized and relative coordinates
                 detected_objects.append({
-                    "confidence": 1.0,
-                    "x": x,
-                    "y": y,
-                    "width": width,
-                    "height": height,
-                    "x_min": x_min,  # Keep normalized coords for reference
+                    "confidence": 1.0,  # API doesn't provide confidence
+                    "x_min": x_min,
                     "y_min": y_min,
                     "x_max": x_max,
                     "y_max": y_max,
+                    # Calculate center and size in normalized coords
+                    "x": (x_min + x_max) / 2,
+                    "y": (y_min + y_max) / 2,
+                    "width": x_max - x_min,
+                    "height": y_max - y_min,
                 })
             
             # Calculate results
@@ -127,20 +141,23 @@ class MoondreamAIClient(AIServiceClient):
             confidence = 1.0 if object_count > 0 else 0.0
             
             _LOGGER.info(
-                "Moondream SDK detection completed: %d objects detected",
+                "Moondream API detection completed: %d objects detected",
                 object_count
             )
-            
+
             return {
                 "object_present": object_present,
                 "object_count": object_count,
                 "detected_objects": detected_objects,
-                "request_id": request_id,
+                "request_id": "",  # API doesn't provide request_id
                 "confidence": confidence,
             }
             
+        except aiohttp.ClientError as err:
+            _LOGGER.error("HTTP error communicating with Moondream API: %s", err)
+            raise
         except Exception as err:
-            _LOGGER.error("Error with Moondream SDK: %s", err)
+            _LOGGER.error("Unexpected error analyzing image: %s", err)
             raise
 
 
