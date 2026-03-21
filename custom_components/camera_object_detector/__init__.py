@@ -105,19 +105,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # If AI service not specified, try to find one from existing config entries
             if not ai_service:
                 # Look for any configured entry to get default AI service
+                _LOGGER.debug("Looking for AI service in config entries. Available entries: %s", list(hass.data[DOMAIN].keys()))
                 for entry_id, entry_data in hass.data[DOMAIN].items():
-                    if isinstance(entry_data, dict) and CONF_AI_SERVICE in entry_data:
-                        ai_service = entry_data[CONF_AI_SERVICE]
-                        api_key = entry_data.get(CONF_API_KEY)
-                        _LOGGER.debug(
-                            "Using AI service from config: %s", ai_service
-                        )
-                        break
+                    _LOGGER.debug("Checking entry %s, type: %s, is dict: %s", entry_id, type(entry_data), isinstance(entry_data, dict))
+                    if isinstance(entry_data, dict):
+                        _LOGGER.debug("Entry data keys: %s", entry_data.keys())
+                        if CONF_AI_SERVICE in entry_data:
+                            ai_service = entry_data[CONF_AI_SERVICE]
+                            api_key = entry_data.get(CONF_API_KEY)
+                            _LOGGER.info(
+                                "Using AI service from config entry %s: %s", entry_id, ai_service
+                            )
+                            break
 
             if not ai_service:
                 raise ServiceValidationError(
-                    "No AI service specified. Either configure the integration via UI "
-                    "or specify 'ai_service' and 'api_key' in the service call",
+                    "Integration not configured. Please configure Camera Object Detector via UI "
+                    "(Settings > Devices & Services) or specify 'ai_service' and 'api_key' in the service call",
                     translation_domain=DOMAIN,
                     translation_key="no_ai_service",
                 )

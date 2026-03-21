@@ -175,7 +175,11 @@ class CameraObjectDetectorOptionsFlow(config_entries.OptionsFlow):
                     default=current_config.get(
                         CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                     ),
-                ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=30, max=86400)),  # Max 24 ore
+                vol.Optional(
+                    CONF_DISABLE_BINARY_SENSOR,
+                    default=current_config.get(CONF_DISABLE_BINARY_SENSOR, False),
+                ): cv.boolean,
             }
         )
 

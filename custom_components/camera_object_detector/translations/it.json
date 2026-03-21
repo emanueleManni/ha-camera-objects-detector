@@ -71,7 +71,7 @@
       "message": "Entità telecamera non trovata"
     },
     "no_ai_service": {
-      "message": "Nessun servizio AI specificato. Configura l'integrazione tramite UI oppure specifica 'ai_service' e 'api_key' nella chiamata del servizio"
+      "message": "Integrazione non configurata. Configura Camera Object Detector tramite UI (Impostazioni > Dispositivi e Servizi) oppure specifica 'ai_service' e 'api_key' nella chiamata del servizio"
     },
     "image_fetch_failed": {
       "message": "Impossibile ottenere l'immagine dalla telecamera"

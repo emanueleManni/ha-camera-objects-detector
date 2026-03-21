@@ -71,7 +71,7 @@
       "message": "Camera entity not found"
     },
     "no_ai_service": {
-      "message": "No AI service specified. Either configure the integration via UI or specify 'ai_service' and 'api_key' in the service call"
+      "message": "Integration not configured. Please configure Camera Object Detector via UI (Settings > Devices & Services) or specify 'ai_service' and 'api_key' in the service call"
     },
     "image_fetch_failed": {
       "message": "Failed to get image from camera"
