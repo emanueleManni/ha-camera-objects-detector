@@ -1,0 +1,27 @@
+detect_object:
+  fields:
+    camera_entity:
+      required: true
+      example: camera.carraio
+      selector:
+        entity:
+          domain: camera
+    detection_object:
+      required: true
+      example: drying_rack
+      default: drying_rack
+      selector:
+        text:
+    ai_service:
+      required: false
+      example: moondream
+      selector:
+        select:
+          options:
+            - moondream
+            - local
+    api_key:
+      required: false
+      selector:
+        text:
+          type: password

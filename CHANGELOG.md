@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-10-25
+
+### Fixed
+
+- Added the missing `services.yaml` for `detect_object`: Home Assistant logged "Failed to load services.yaml" at every start and showed the action without fields in Developer Tools
+- `documentation` and `issue_tracker` in `manifest.json` pointed to a non-existent repository
+
 ## [0.2.3] - 2026-03-21
 
 ### Changed
